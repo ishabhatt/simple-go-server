@@ -25,8 +25,8 @@ func main() {
 	http.HandleFunc("/posts", postsHandler)
 	http.HandleFunc("/posts/", postHandler)
 
-	fmt.Println("Server is running at http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	fmt.Println("Server is running at http://localhost:8081")
+	log.Fatal(http.ListenAndServe(":8081", nil))
 }
 
 func postsHandler(w http.ResponseWriter, r *http.Request) {
