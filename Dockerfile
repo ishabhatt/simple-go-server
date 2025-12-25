@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.22-alpine AS builder
+FROM golang:1.22-alpine AS build
 WORKDIR /app
 
 # Cache deps first
