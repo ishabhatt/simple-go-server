@@ -1,25 +1,38 @@
 pipeline {
   agent any
+  options {
+    timestamps()
+    skipDefaultCheckout(true)   // prevent the implicit auto-checkout :contentReference[oaicite:1]{index=1}
+  }
 
   stages {
-    stage('Checkout') {
-      steps { checkout scm }
+    stage('Checkout (clean)') {
+      steps {
+        deleteDir()
+        checkout([$class: 'GitSCM',
+          branches: [[name: '*/main']],
+          userRemoteConfigs: [[url: 'https://github.com/ishabhatt/simple-go-server.git']]
+        ])
+        sh 'git status'
+        sh 'git rev-parse --short HEAD'
+      }
     }
 
-    stage('Test (in Go Docker image)') {
+    stage('Test (Go Docker image)') {
       steps {
         script {
-          docker.image('golang:1.22').inside('-u 1000:1000') {
-            sh 'go test ./...'
+          docker.image('golang:1.22').inside('--user 0:0') {
+            	sh 'id'
+		sh 'go test ./...'
           }
         }
       }
     }
 
-    stage('Build (in Go Docker image)') {
+    stage('Build (Go Docker image)') {
       steps {
         script {
-          docker.image('golang:1.22').inside('-u 1000:1000') {
+          docker.image('golang:1.22').inside('--user 0:0') {
             sh 'mkdir -p dist'
             sh 'go build -o dist/simple-go-server .'
           }
