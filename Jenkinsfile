@@ -66,6 +66,7 @@ pipeline {
 
         docker rm -f "$cid"
       '''
+      }
     }
   }
 
