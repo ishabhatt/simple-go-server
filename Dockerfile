@@ -1,27 +1,24 @@
 # syntax=docker/dockerfile:1
 
 FROM golang:1.22-alpine AS builder
-WORKDIR /src
-
-# Needed for HTTPS module downloads
-RUN apk add --no-cache ca-certificates
+WORKDIR /app
 
 # Cache deps first
-COPY go.mod ./
+COPY go.mod go.sum ./
 RUN go mod download
 
 # Copy the rest of the source
 COPY . .
 
-# Run tests (optional but recommended)
-RUN CGO_ENABLED=0 go test -buildvcs=false ./...
+RUN go test ./...
 
 # Build a small static binary
-RUN CGO_ENABLED=0 GOOS=linux go build -buildvcs=false -trimpath -ldflags="-s -w" -o /out/server .
+RUN CGO_ENABLED=0 GOOS=linux go build -o server .
 
 # Minimal runtime image
-FROM gcr.io/distroless/static-debian12:nonroot
-COPY --from=builder /out/server /server
+FROM gcr.io/distroless/base-debian12
+WORKDIR /
+COPY --from=build /app/server /server
 
 EXPOSE 8081
 USER nonroot:nonroot
