@@ -5,6 +5,10 @@ pipeline {
     skipDefaultCheckout(true)
   }
 
+  environment {
+    IMAGE = "simple-go-server:${BUILD_NUMBER}"
+  }
+
   stages {
     stage('Checkout (clean)') {
       steps {
@@ -13,28 +17,7 @@ pipeline {
       }
     }
 
-	stage('Security Scan (Trivy)') {
-	  steps {
-	    sh '''
-	      set -eux
-	      mkdir -p reports
-
-	      # Scan image; fail on HIGH/CRITICAL
-	      docker run --rm \
-	        -v /var/run/docker.sock:/var/run/docker.sock \
-	        -v "$PWD":/work -w /work \
-	        aquasec/trivy:0.51.1 image \
-	        --severity HIGH,CRITICAL \
-	        --exit-code 1 \
-	        --format template \
-	        --template "@contrib/html.tpl" \
-	        --output reports/trivy.html \
-	        simple-go-server:${BUILD_NUMBER}
-	    '''
-	  }
-	}
-
-    stage('Test (Go in Docker)') {
+	stage('Test (Go in Docker)') {
       steps {
         script {
           docker.image('golang:1.22').inside('--user 0:0') {
@@ -75,6 +58,27 @@ pipeline {
         sh 'docker build -t simple-go-server:${BUILD_NUMBER} .'
       }
     }
+
+	stage('Security Scan (Trivy)') {
+	  steps {
+	    sh '''
+	      set -eux
+	      mkdir -p reports
+
+	      # Scan image; fail on HIGH/CRITICAL
+	      docker run --rm \
+	        -v /var/run/docker.sock:/var/run/docker.sock \
+	        -v "$PWD":/work -w /work \
+	        aquasec/trivy:0.51.1 image \
+	        --severity HIGH,CRITICAL \
+	        --exit-code 1 \
+	        --format template \
+	        --template "@contrib/html.tpl" \
+	        --output reports/trivy.html \
+	        simple-go-server:${BUILD_NUMBER}
+	    '''
+	  }
+	}
 
     stage('Smoke Test') {
       steps {
