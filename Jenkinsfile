@@ -66,9 +66,13 @@ pipeline {
 	      mkdir -p reports
 
 		  # Download Trivy HTML template into workspace (once per build)
-	      docker run --rm --volumes-from jenkins -w "$WORKSPACE" curlimages/curl:8.5.0 \
+	      docker run --rm \
+	        --user 0:0 \
+	        --volumes-from jenkins \
+	        -w "$WORKSPACE" \
+	        curlimages/curl:8.5.0 \
 	        -fsSL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl \
-	        -o reports/html.tpl
+	        -o "$WORKSPACE/reports/html.tpl"
 
 	      # Scan image; fail on HIGH/CRITICAL
 	      docker run --rm \
