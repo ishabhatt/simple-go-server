@@ -65,6 +65,11 @@ pipeline {
 	      set -eux
 	      mkdir -p reports
 
+		  # Download Trivy HTML template into workspace (once per build)
+	      docker run --rm --volumes-from jenkins -w "$WORKSPACE" curlimages/curl:8.5.0 \
+	        -fsSL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl \
+	        -o reports/html.tpl
+
 	      # Scan image; fail on HIGH/CRITICAL
 	      docker run --rm \
 	        -v /var/run/docker.sock:/var/run/docker.sock \
@@ -74,7 +79,7 @@ pipeline {
 	        --severity HIGH,CRITICAL \
 	        --exit-code 1 \
 	        --format template \
-	        --template "@contrib/html.tpl" \
+	        --template "@reports/html.tpl" \
 	        --output $WORKSPACE/reports/trivy.html \
 	        "$IMAGE"
 
