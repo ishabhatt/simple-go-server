@@ -74,7 +74,7 @@ pipeline {
 	        --exit-code 1 \
 	        --format template \
 	        --template "@contrib/html.tpl" \
-	        --output reports/trivy.html \
+	        --output /work/reports/trivy.html \
 	        simple-go-server:${BUILD_NUMBER}
 	    '''
 	  }
