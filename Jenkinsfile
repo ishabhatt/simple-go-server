@@ -18,11 +18,18 @@ pipeline {
         script {
           docker.image('golang:1.22').inside('--user 0:0') {
             sh '''
-				bash -lc 'set -euxo pipefail
-					mkdir -p reports
-					go install gotest.tools/gotestsum@latest
-					$(go env GOPATH)/bin/gotestsum --format standard-verbose --junitfile reports/junit.xml -- ./...
-				'
+				set -euxo
+				mkdir -p reports
+
+				# Install gotestsum (outputs JUnit XML)
+          		go install gotest.tools/gotestsum@latest
+				export PATH="$(go env GOPATH)/bin:$PATH"
+
+				# Run tests + write JUnit report
+		        gotestsum \
+		            --format standard-verbose \
+		            --junitfile reports/junit.xml \
+		            -- ./...
 			'''
           }
         }
