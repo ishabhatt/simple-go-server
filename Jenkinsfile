@@ -22,7 +22,7 @@ pipeline {
 				mkdir -p reports
 
 				# Install gotestsum (outputs JUnit XML)
-          		go install gotest.tools/gotestsum@latest
+          		go install gotest.tools/gotestsum@v1.12.0
 				export PATH="$(go env GOPATH)/bin:$PATH"
 
 				# Run tests + write JUnit report
