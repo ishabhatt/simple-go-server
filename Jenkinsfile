@@ -24,10 +24,11 @@ pipeline {
 	        -v /var/run/docker.sock:/var/run/docker.sock \
 	        -v "$PWD":/work -w /work \
 	        aquasec/trivy:0.51.1 image \
-	        --format html \
-	        --output reports/trivy.html \
 	        --severity HIGH,CRITICAL \
 	        --exit-code 1 \
+	        --format template \
+	        --template "@contrib/html.tpl" \
+	        --output reports/trivy.html \
 	        simple-go-server:${BUILD_NUMBER}
 	    '''
 	  }
