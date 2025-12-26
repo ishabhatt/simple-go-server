@@ -68,14 +68,17 @@ pipeline {
 	      # Scan image; fail on HIGH/CRITICAL
 	      docker run --rm \
 	        -v /var/run/docker.sock:/var/run/docker.sock \
-	        -v "$PWD":/work -w /work \
+			--volumes-from jenkins \
+	        -w "$WORKSPACE" \
 	        aquasec/trivy:0.51.1 image \
 	        --severity HIGH,CRITICAL \
 	        --exit-code 1 \
 	        --format template \
 	        --template "@contrib/html.tpl" \
-	        --output /work/reports/trivy.html \
-	        simple-go-server:${BUILD_NUMBER}
+	        --output $WORKSPACE/reports/trivy.html \
+	        "$IMAGE"
+
+		  ls -la reports | head
 	    '''
 	  }
 	}
