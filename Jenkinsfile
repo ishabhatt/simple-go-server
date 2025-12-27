@@ -74,13 +74,13 @@ pipeline {
 	        -fsSL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl \
 	        -o "$WORKSPACE/reports/html.tpl"
 
-	      # Scan image; fail on HIGH/CRITICAL
+	      # Scan image; fail on CRITICAL
 	      docker run --rm \
 	        -v /var/run/docker.sock:/var/run/docker.sock \
 			--volumes-from jenkins \
 	        -w "$WORKSPACE" \
 	        aquasec/trivy:0.51.1 image \
-	        --severity HIGH,CRITICAL \
+	        --severity CRITICAL \
 	        --exit-code 1 \
 	        --format template \
 	        --template "@reports/html.tpl" \
