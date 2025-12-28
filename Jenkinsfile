@@ -6,7 +6,7 @@ pipeline {
   }
 
   environment {
-    IMAGE = "simple-go-server:${BUILD_NUMBER}"
+    IMAGE = "simple-go-server"
   }
 
   stages {
@@ -17,6 +17,18 @@ pipeline {
       }
     }
 
+	stage('Metadata') {
+	  steps {
+	    script {
+	      env.GIT_SHA = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+	      env.IMAGE_TAG = "${BUILD_NUMBER}-${env.GIT_SHA}"
+	      env.IMAGE_REF = "${IMAGE}:${env.IMAGE_TAG}"
+		  currentBuild.displayName = "#${BUILD_NUMBER} ${env.GIT_SHA}"
+  		  currentBuild.description = "Image: ${env.IMAGE_REF}"
+	    }
+	    echo "IMAGE_REF=${env.IMAGE_REF}"
+	  }
+	}
 	stage('Test (Go in Docker)') {
       steps {
         script {
@@ -55,7 +67,12 @@ pipeline {
 
     stage('Docker Build') {
       steps {
-        sh 'docker build -t simple-go-server:${BUILD_NUMBER} .'
+        sh 'docker build \
+			--build-arg VCS_REF=${GIT_SHA} \
+			--build-arg BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ) \
+			-t ${IMAGE_REF} .'
+		sh 'docker inspect -f "{{ index .Config.Labels \\"org.opencontainers.image.revision\\" }}" ${IMAGE_REF}'
+		sh 'docker inspect -f "{{ index .Config.Labels \\"org.opencontainers.image.created\\" }}" ${IMAGE_REF}'
       }
     }
 
@@ -98,7 +115,7 @@ pipeline {
         set -euxo pipefail
 
         # Run the built image (no -p needed)
-        cid=$(docker run -d --name sgstest-${BUILD_NUMBER} simple-go-server:${BUILD_NUMBER})
+        cid=$(docker run -d --name sgstest-${BUILD_NUMBER} ${IMAGE_REF}
 
         # Wait until /posts responds (max ~20s)
         for i in $(seq 1 20); do
@@ -124,8 +141,9 @@ pipeline {
   post {
     always {
       archiveArtifacts artifacts: 'dist/**', fingerprint: true
+	  sh 'docker inspect -f "{{ index .Config.Labels \\"org.opencontainers.image.revision\\" }}" ${IMAGE_REF}'
       sh 'docker rm -f sgstest-${BUILD_NUMBER} || true'
-      sh 'docker image rm -f simple-go-server:${BUILD_NUMBER} || true'
+      sh 'docker image rm -f ${IMAGE_REF} || true'
 	  archiveArtifacts artifacts: 'reports/**', fingerprint: true
     }
   }
